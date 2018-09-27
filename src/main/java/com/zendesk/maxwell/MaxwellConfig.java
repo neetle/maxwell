@@ -127,6 +127,17 @@ public class MaxwellConfig extends AbstractConfig {
 	public String javascriptFile;
 	public Scripting scripting;
 
+	public String pulsarWebServiceUrl;
+	public String pulsarTopic;
+	public String pulsarProducerName;
+	public String pulsarMessageRoutingMode;
+	public String pulsarAuthPlugin;
+	public String pulsarAuthParams;
+	public boolean pulsarUseTls;
+	public boolean pulsarTlsAllowInsecureConnection;
+	public String pulsarTlsTrustCertsFilePath;
+	public long pulsarProducerSequenceId;
+
 	public MaxwellConfig() { // argv is only null in tests
 		this.customProducerProperties = new Properties();
 		this.kafkaProperties = new Properties();
@@ -283,6 +294,20 @@ public class MaxwellConfig extends AbstractConfig {
 
 		parser.accepts( "__separator_10" );
 
+		parser.accepts("pulsar_web_service_url", "The web URL for the Pulsar cluster. default: pulsar://localhost:6650").withRequiredArg();
+		parser.accepts("pulsar_topic", "The name of Pulsar topic to publish to. default: maxwell").withRequiredArg();
+		parser.accepts("pulsar_producer_name", "The name of the Pulsar producer").withOptionalArg();
+		parser.accepts("pulsar_producer_sequence_id", "The seed sequence ID used by the Pulsar producer").withOptionalArg();
+		parser.accepts("pulsar_message_routing_mode", "[single|roundRobin] The routing strategy for Pulsar messages. default: roundRobin").withOptionalArg();
+		parser.accepts("pulsar_auth_plugin", "The authentication plugin").withOptionalArg();
+		parser.accepts("pulsar_auth_params", "The authentication parameters for the cluster, as a comma-separated string").withOptionalArg();
+		parser.accepts("pulsar_use_tls", "Whether or not TLS authentication will be enforced in the cluster").withOptionalArg();
+		parser.accepts("pulsar_tls_allow_insecure_connection", "Whether or not untrusted TLS certificate should be accepted from broker").withOptionalArg();
+		parser.accepts("pulsar_tls_trust_certs_file_path", "The path to the trusted TLS certificate file").withOptionalArg();
+
+
+		parser.accepts( "__separator_11" );
+
 		parser.accepts( "metrics_prefix", "the prefix maxwell will apply to all metrics" ).withRequiredArg();
 		parser.accepts( "metrics_type", "how maxwell metrics will be reported, at least one of slf4j|jmx|http|datadog" ).withRequiredArg();
 		parser.accepts( "metrics_slf4j_interval", "the frequency metrics are emitted to the log, in seconds, when slf4j reporting is configured" ).withRequiredArg();
@@ -300,7 +325,7 @@ public class MaxwellConfig extends AbstractConfig {
 		parser.accepts( "http_diagnostic_timeout", "the http diagnostic response timeout in ms when http_diagnostic=true. default: 10000" ).withRequiredArg();
 		parser.accepts( "metrics_jvm", "enable jvm metrics: true|false. default: false" ).withRequiredArg();
 
-		parser.accepts( "__separator_11" );
+		parser.accepts( "__separator_12" );
 
 		parser.accepts( "help", "display help" ).forHelp();
 
@@ -404,6 +429,18 @@ public class MaxwellConfig extends AbstractConfig {
 		this.redisPubChannel	= fetchOption("redis_pub_channel", options, properties, "maxwell");
 		this.redisListKey		= fetchOption("redis_list_key", options, properties, "maxwell");
 		this.redisType			= fetchOption("redis_type", options, properties, "pubsub");
+
+		this.pulsarWebServiceUrl				= fetchOption("pulsar_web_service_url", options, properties, "pulsar://localhost:6650");
+		this.pulsarTopic						= fetchOption("pulsar_topic", options, properties, "maxwell");
+		this.pulsarProducerName					= fetchOption("pulsar_producer_name", options, properties, null);
+		this.pulsarMessageRoutingMode			= fetchOption("pulsar_message_routing_mode", options, properties, "roundRobin");
+		this.pulsarProducerSequenceId 			= Integer.parseInt(fetchOption("pulsar_producer_sequence_id", options, properties, "-1"));
+		this.pulsarAuthPlugin					= fetchOption("pulsar_auth_plugin", options, properties, null);
+		this.pulsarAuthParams					= fetchOption("pulsar_auth_params", options, properties, null);
+		this.pulsarUseTls						= fetchBooleanOption("pulsar_use_tls", options, properties, false);
+		this.pulsarTlsAllowInsecureConnection	= fetchBooleanOption("pulsar_tls_allow_insecure_connection", options, properties, false);
+		this.pulsarTlsTrustCertsFilePath		= fetchOption("pulsar_tls_trust_certs_file_path", options, properties, null);
+
 
 		String kafkaBootstrapServers = fetchOption("kafka.bootstrap.servers", options, properties, null);
 		if ( kafkaBootstrapServers != null )
