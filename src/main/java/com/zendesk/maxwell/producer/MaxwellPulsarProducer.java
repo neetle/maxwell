@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MaxwellPulsarProducer extends AbstractProducer implements StoppableTask {
 	private static final Logger logger = LoggerFactory.getLogger(MaxwellPulsarProducer.class);
@@ -18,11 +19,13 @@ public class MaxwellPulsarProducer extends AbstractProducer implements Stoppable
 	private Producer<String> producer;
 
 	private CompletableFuture<Void> close;
+	private AtomicBoolean closing;
 
 	public MaxwellPulsarProducer(MaxwellContext maxwellContext) {
 		super(maxwellContext);
 
 		close = new CompletableFuture<>();
+		closing = new AtomicBoolean(false);
 
 		MaxwellConfig cfg = maxwellContext.getConfig();
 
@@ -80,10 +83,15 @@ public class MaxwellPulsarProducer extends AbstractProducer implements Stoppable
 			return;
 		}
 
+		if (this.closing.get()) {
+			logger.error("Attempted to send event " + r.getPosition() + " during shutdown");
+		}
+
 		String msg = r.toJSON(outputConfig);
 		MessageId msgId = null;
 
 		try {
+			// force sync as we want this to be reliable over lossy
 			msgId = this.producer.send(msg);
 
 			this.succeededMessageCount.inc();
@@ -114,10 +122,13 @@ public class MaxwellPulsarProducer extends AbstractProducer implements Stoppable
 
 	@Override
 	public void requestStop() {
-		this.close = CompletableFuture.allOf(
-				this.client.closeAsync(),
-				this.producer.closeAsync()
-		);
+		if (this.closing.compareAndSet(false, true)) {
+			// we weren't shutting down, now we are.
+			this.close = CompletableFuture.allOf(
+					this.client.closeAsync(),
+					this.producer.closeAsync()
+			);
+		}
 	}
 
 	@Override
