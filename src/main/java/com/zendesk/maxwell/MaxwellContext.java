@@ -365,6 +365,8 @@ public class MaxwellContext {
 			case "redis":
 				this.producer = new MaxwellRedisProducer(this, this.config.redisPubChannel, this.config.redisListKey, this.config.redisType);
 				break;
+			case "pulsar":
+				this.producer = new MaxwellPulsarProducer(this);
 			case "none":
 				this.producer = null;
 				break;
