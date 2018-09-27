@@ -45,7 +45,9 @@ public class MaxwellPulsarProducer extends AbstractProducer implements Stoppable
 			ProducerBuilder<String> pb = this.client.newProducer(Schema.STRING);
 
 			pb = pb.topic(cfg.pulsarTopic);
-			pb = pb.producerName(cfg.pulsarProducerName);
+			if (cfg.pulsarProducerName != null) {
+				pb = pb.producerName(cfg.pulsarProducerName);
+			}
 
 			if (Objects.equals(cfg.pulsarMessageRoutingMode, "single")) {
 				pb = pb.messageRoutingMode(MessageRoutingMode.SinglePartition);
