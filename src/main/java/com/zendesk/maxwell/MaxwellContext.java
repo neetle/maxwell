@@ -367,6 +367,7 @@ public class MaxwellContext {
 				break;
 			case "pulsar":
 				this.producer = new MaxwellPulsarProducer(this);
+				break;
 			case "none":
 				this.producer = null;
 				break;
